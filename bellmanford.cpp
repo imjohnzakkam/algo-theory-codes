@@ -3,68 +3,65 @@
 #define vl vector<ll>
 #define vpl vector<pair<ll,ll>>
 #define max 1000
+#define LL_MAX INT_MAX
+#define nl cout << endl;
 using namespace std;
-
+ll n;
 struct edge {ll u,v,wt;};
 
-void addedge(vpl adj[], ll u, ll v, ll wt)
+void addedge(vpl G[], ll u, ll v, ll wt)
+    { G[u].push_back(make_pair(v, wt)); }
+
+void bellmanford(vpl G[], ll src)
 {
-    adj[u].push_back(make_pair(v, wt)); 
-}
-
-void bellmanford(vpl adj[], int n, int src)
-{
-    int dist[n];
-
-    for(int i=0;i<n;i++)
-    dist[i]=INT_MAX;
-
+    ll dist[n];
+    for(ll i=0;i<n;i++)
+    dist[i]=LL_MAX;
     dist[src]=0;
-    int v,w;
-
-    for(int i=1;i<=n-1;i++)
+    ll v,w;
+    for(ll i=1;i<=n-1;i++)
     {
-        for(int u=0;u<n;u++)
+        for(ll u=0;u<n;u++)
         {
-            for (auto it=adj[u].begin();it!=adj[u].end();it++) 
+            for (auto it=G[u].begin();it!=G[u].end();it++) 
             { 
                 v = it->first; 
                 w = it->second; 
-                if(dist[u]!=INT_MAX && dist[v]>dist[u]+w)
+                if(dist[u]!=LL_MAX && dist[v]>dist[u]+w)
                 dist[v]=dist[u]+w;
                 
             } 
         }
     }
-
-    cout<<"Distances of vertices from "<<src<<" :\n";
-    cout<<"Vertices Distance";
-    for(int i=0;i<n;i++)
-    {
-        cout<<" "<<i<<"     "<<dist[i]<<endl;
-    }
+    cout<<"Distances of vertices from :"<<src;nl;
+    cout<<"Vertices Distance";nl;
+    for(ll i=0;i<n;i++)
+        {cout<<i<<"-"<<dist[i];nl;}
 }
 
-void get_graph(vector<pair<int,int> > adj[], int &n)
+void get_graph(vpl G[])
 {
-    cout<<"Enter no of vertices: "<<endl;
+    cout<<"Enter no of vertices: ";nl;
     cin>>n;
-    int u,v,w,m;
-    cout<<"Enter no of edges: "<<endl;
+    ll u,v,w,m;
+    cout<<"Enter no of edges: ";nl;
     cin>>m;
-    cout<<"Enter edges(src,dest,weight separated by spaces): ";
-    for(int i=0;i<m;i++)
+    cout<<"Enter edges(in the order : src, destination, weights ): ";
+    for(ll i=0;i<m;i++)
     {
         cin>>u>>v>>w;
-        edge_add(adj,u,v,w);
+        addedge(G,u,v,w);
     }
-
+    return;
 }
 
-int main()
+int32_t main()
 {
-    vector<pair<int,int> > adj[100];
-    int n;
-    get_graph(adj,n);
-    bellmanford(adj,n,0);
+    vpl G[max];
+    get_graph(G);
+    ll x;
+    //cout << "Enter the source vertex : (start from 0) :";
+    //cin >> x; 
+    cout << "Bellman-Ford from source as : 0" <<x;nl;bellmanford(G,0);
+    return 0;
 }

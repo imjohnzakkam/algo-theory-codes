@@ -62,6 +62,6 @@ int32_t main()
     ll x;
     //cout << "Enter the source vertex : (start from 0) :";
     //cin >> x; 
-    cout << "Bellman-Ford from source as : 0" <<x;nl;bellmanford(G,0);
+    cout << "Bellman-Ford from source as : 0";nl;bellmanford(G,0);
     return 0;
 }

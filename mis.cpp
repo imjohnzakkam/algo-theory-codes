@@ -1,8 +1,13 @@
-#include <bits/stdc++.h> 
+#include<bits/stdc++.h>
+#define ll long long int
+#define vl vector<ll>
+#define vpl vector<pair<ll,ll>>
+#define ll max(ll x, ll y) { return (x > y)? x: y; } 
+#define LL_MAX INT_MAX
+#define nl cout << endl;
 using namespace std; 
 
-// A utility function to find max of two integers 
-int max(int x, int y) { return (x > y)? x: y; } 
+
 
 /* A binary tree node has data, pointer 
 to left child and a pointer to 

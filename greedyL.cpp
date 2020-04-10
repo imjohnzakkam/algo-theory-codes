@@ -1,4 +1,4 @@
-/*Same as 1_greedycoin.cpp but not accepts a value of number of denominations greater than l
+/*Same as coin_change_greedy.cpp but not accepts a value of number of denominations greater than l
 a while loop is added which only ends while no. of denominations is less than l*/
 #include <iostream>
 using namespace std;

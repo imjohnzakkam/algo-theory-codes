@@ -1,4 +1,4 @@
-/*Same as 1_dpcoin.cpp but not accepts a value of number of denominations greater than l
+/*Same as coin_change_dynamic.cpp but not accepts a value of number of denominations greater than l
 a while loop is added which only ends while no. of denominations is less than l*/
 #include<bits/stdc++.h>
 using namespace std;

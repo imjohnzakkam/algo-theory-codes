@@ -1,59 +1,28 @@
-// Floyd Warshall Algorithm in C++
-
-#include <iostream>
+#include<bits/stdc++.h>
+#define ll long long int
+#define inf INT_MAX
 using namespace std;
-
-// defining the number of vertices
-#define nV 4
-
-#define INF 99999
-
-void printMatrix(int A[][nV]);
-
-void floydWarshall(int graph[][nV])
-{
-  int A[nV][nV], i, j, k;
-
-  for (i = 0; i < nV; i++)
-    for (j = 0; j < nV; j++)
-      A[i][j] = graph[i][j];
-
-  for (k = 0; k < nV; k++)
-  {
-    for (i = 0; i < nV; i++)
-    {
-      for (j = 0; j < nV; j++)
-      {
-        if (A[i][k] + A[k][j] < A[i][j])
-          A[i][j] = A[i][k] + A[k][j];
-      }
-    }
-  }
-  printMatrix(A);
+ll n = 4;
+void apsp(ll g[][4]){
+	ll i,j,k;
+	for(i=0;i<n;i++){
+		for(j=0;j<n;j++){
+			for(k=0;k<n;k++){
+				if(g[j][k]>g[j][i] + g[i][k]){
+					g[j][k] = g[j][i] + g[i][k];
+				}
+			}
+		}
+	}
+	for(i=0;i<n;i++){
+		for(j=0;j<n;j++){
+			cout<<g[i][j]<<" ";
+		}
+		cout<<endl;
+	}
 }
-
-void printMatrix(int A[][nV])
-{
-  for (int i = 0; i < nV; i++)
-  {
-    for (int j = 0; j < nV; j++)
-    {
-      if (A[i][j] == INF)
-        cout << "INF"
-           << "  ";
-      else
-        cout << A[i][j] << "  ";
-    }
-    cout << endl;
-  }
+int main(){
+	ll g[4][4]={{0,3,inf,7},{8,0,2,inf},{5,inf,0,1},{2,inf,inf,0}};
+	apsp(g);
+	return 0;
 }
-
-int main()
-{
-  int graph[nV][nV] = {{0, 3, INF, 5}, 
-             {2, 0, INF, 4},
-             {INF, 1, 0, INF},
-             {INF, INF, 2, 0}};
-  floydWarshall(graph);
-}
-//INF(infinity) taken as 9999,could use INT_MAX as well

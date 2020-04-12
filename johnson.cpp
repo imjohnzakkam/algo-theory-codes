@@ -1,182 +1,162 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <climits>
-#include <exception>
-#include <set>
-
+#include<iostream>
+#include<vector>
+#include<algorithm>
+#include<list>
+#include<queue>
+#include<cstdlib>
+#define INF 0x3f3f3f3f
 using namespace std;
-
-struct Edge {
-  int head;
-  long cost;
+int *djk_dist;
+class cmp{
+public:
+    bool operator()(int a,int b){
+        return (djk_dist[a]>djk_dist[b]);
+    }
 };
-
-using Graph = vector<vector<Edge>>;
-using SingleSP = vector<long>;
-using AllSP = vector<vector<long>>;
-const long INF = LONG_MAX;
-
-// first line is in the format <N> <M> where N is the number of vertices, M is the number of edges that follow
-// each following line represents a directed edge in the form <Source> <Dest> <Cost>
-Graph loadgraph(istream& is) {
-  Graph g;
-
-  int n, m;
-  is >> n >> m;
-  cout << "Graph has " << n << " vertices and " << m << " edges." << endl;
-  g.resize(n+1);
-  while (is) {
-    int v1, v2, c;
-    is >> v1 >> v2 >> c;
-    if (is) {
-      g[v1].push_back({v2, c});
-    }
-  }
-
-  return g;
+void add_edge(vector<list<pair<int,int> > > &adj_list,int src,int dest, int wt){
+    adj_list[src].push_back(make_pair(dest,wt));
 }
-
-Graph addZeroEdge(Graph g) {
-  // add a zero-cost edge from vertex 0 to all other edges
-  for (int i = 1; i < g.size(); i++) {
-    g[0].push_back({i, 0});
-  }
-
-  return g;
-}
-
-SingleSP bellmanford(Graph &g, int s) {
-  vector<vector<long>> memo(g.size()+2, vector<long>(g.size(), INF));
-
-  // initialise base case
-  memo[0][s] = 0;
-
-  for (int i = 1; i < memo.size(); i++) {
-    // compute shortest paths from s to all vertices, with max hop-count i
-    for (int n = 0; n < g.size(); n++) {
-      if (memo[i-1][n] < memo[i][n]) {
-        memo[i][n] = memo[i-1][n];
-      }
-      for (auto& e : g[n]) {
-        if (memo[i-1][n] != INF) {
-          if (memo[i-1][n] + e.cost < memo[i][e.head]) {
-            memo[i][e.head] = memo[i-1][n] + e.cost;
-          }
+void change_weights(vector<list<pair<int,int> > > &adj_list,int *h){
+    int v = adj_list.size(),i;
+    list<pair<int,int> > :: iterator itr;
+    for(i=0;i<v;i++){
+        for(itr=adj_list[i].begin();itr!=adj_list[i].end();itr++){
+            itr->second += h[i] - h[itr->first];
         }
-      }
     }
-  }
-
-  // check if the last iteration differed from the 2nd-last
-  for (int j = 0; j < g.size(); j++) {
-    if (memo[g.size()+1][j] != memo[g.size()][j]) {
-      throw string{"negative cycle found"};
-    }
-  }
-
-  return memo[g.size()];
 }
-
-SingleSP djikstra(const Graph& g, int s) {
-  SingleSP dist(g.size(), INF);
-  set<pair<int,long>> frontier;
-
-  frontier.insert({0,s});
-
-  while (!frontier.empty()) {
-    pair<int,long> p = *frontier.begin();
-    frontier.erase(frontier.begin());
-
-    int d = p.first;
-    int n = p.second;
-
-    // this is our shortest path to n
-    dist[n] = d;
-
-    // now look at all edges out from n to update the frontier
-    for (auto e : g[n]) {
-      // update this node in the frontier if we have a shorter path
-      if (dist[n]+e.cost < dist[e.head]) {
-        if (dist[e.head] != INF) {
-          // we've seen this node before, so erase it from the set in order to update it
-          frontier.erase(frontier.find({dist[e.head], e.head}));
+int * bellman_ford_johnson(vector<list<pair<int,int> > > &adj_list){
+    int v = adj_list.size();
+    list<pair<int,int> > :: iterator itr;
+    int i,j;
+    list<pair<int,int> > src_list;
+    for(i=0;i<v;i++){
+        src_list.push_back(make_pair(i,0));
+    }
+    adj_list.push_back(src_list);
+    int src = v;
+    v++;/*sizeof(adj_list) now is v+1*/
+    int *dist;
+    dist = (int *)calloc(v,sizeof(int));
+    for(i=0;i<v;i++)dist[i]=INF;
+    dist[src] = 0;
+    bool f=0;
+    for(i=0;i<v-1;i++){
+        /*Now traverse all edges in adj_list*/
+        f=0;
+        for(j=0;j<v;j++){
+            if(dist[j]!=INF){
+                for(itr= adj_list[j].begin();itr!=adj_list[j].end();itr++){
+                    if(dist[itr->first]>dist[j]+itr->second){
+                        dist[itr->first] = dist[j]+itr->second;
+                        f=1;
+                    }
+                }
+            }
         }
-        frontier.insert({dist[n]+e.cost, e.head});
-        dist[e.head] = dist[n]+e.cost;
-      }
+        if(!f)break;
     }
-  }
-
-  return dist;
+    f=0;
+    for(j=0;j<v;j++){
+            for(itr= adj_list[j].begin();itr!=adj_list[j].end();itr++){
+                if(dist[itr->first]>dist[j]+itr->second){
+                    dist[itr->first] = dist[j]+itr->second;
+                    f=1;
+                }
+            }
+    }
+    if(f){
+        return NULL;
+    }
+    adj_list.pop_back();
+    return dist;
 }
-
-AllSP johnson(Graph &g) {
-  // now build "g prime" which is g with a new edge added from vertex 0 to all other edges, with cost 0
-  Graph gprime = addZeroEdge(g);
-
-  // now run Bellman-Ford to get single-source shortest paths from s to all other vertices
-  SingleSP ssp;
-  try {
-    ssp = bellmanford(gprime, 0);
-  } catch (string e) {
-    cout << "Negative cycles found in graph.  Cannot compute shortest paths." << endl;
-    throw e;
-  }
-
-  // no re-weight each edge (u,v) in g to be: cost + ssp[u] - ssp[v].
-  for (int i = 1; i < g.size(); i++) {
-    for (auto &e : g[i]) {
-      e.cost = e.cost + ssp[i] - ssp[e.head];
+int *dijkstra(vector<list<pair<int,int> > > &adj_list, int src){
+    int v = adj_list.size(), i;
+    djk_dist = (int *)calloc(v, sizeof(int));
+    bool sptSet[v];
+    for(i=0;i<v;i++){
+        djk_dist[i]=INF;
+        sptSet[i]=false;
     }
-  }
-
-  // now that we've re-weighted our graph, we can invoke N iterations of Djikstra to find
-  // all pairs shortest paths
-  AllSP allsp(g.size());
-  for (int i = 1; i < g.size(); i++) {
-    allsp[i] = djikstra(g, i);
-  }
-
-  // now re-weight the path costs back to their original weightings
-  for (int u = 1; u < g.size(); u++) {
-    for (int v = 1; v < g.size(); v++) {
-      if (allsp[u][v] != INF) {
-        allsp[u][v] += ssp[v] - ssp[u];
-      }
+    djk_dist[src]=0;
+    priority_queue<int,vector<int>,cmp> pq;
+    for(i=0;i<v;i++)pq.push(i);
+    int node;
+    list<pair<int,int> > :: iterator itr;
+    while(!pq.empty()){
+        node = pq.top();
+        sptSet[node]=true;
+        for(itr=adj_list[node].begin();itr!=adj_list[node].end();itr++){
+            if(!sptSet[itr->first] && djk_dist[itr->first]>djk_dist[node]+itr->second){
+                djk_dist[itr->first]=djk_dist[node]+itr->second;
+            }
+        }
+        pq.pop();
     }
-  }
-
-  return allsp;
+    return djk_dist;
 }
-
-int main (int argc, char *argv[]) {
-  if (argc < 2) {
-    cerr << "Usage: " << argv[0] << " <infile>" << endl;
-    return 1;
-  }
-
-  ifstream is {argv[1]};
-  if (!is) {
-    cerr << "Couldn't open input file: " << argv[1] << endl;
-    return 1;
-  }
-
-  Graph g = loadgraph(is);
-
-  // run Johnson's algorithm to get all pairs shortest paths
-  AllSP asp = johnson(g);
-
-  // find the "shortest shortest path", ie. the path with lowest cost,
-  // amongst all shortest path pairs.
-  long shortest = INF;
-  for (int i = 1; i < g.size(); i++) {
-    for (int j = 1; j < g.size(); j++) {
-      if (asp[i][j] < shortest) {
-        shortest = asp[i][j];
-      }
+void print_adj_list(vector<list<pair<int,int> > > adj_list){
+    int v = adj_list.size(),i;
+    list<pair<int,int> >::iterator itr;
+    for(i=0;i<v;i++){
+        for(itr =adj_list[i].begin();itr!=adj_list[i].end();itr++)cout << itr->second << ' ';
+        cout << endl;
     }
-  }
+}
+void johnson_spa(vector<list<pair<int,int> > > adj_list){
 
-  cout << "Shortest shortest path = " << shortest << endl;
+    /*Get weights to assign to each vertex for readjusting each edge wt to make them positive and hence be able to apply djk*/
+    int * h = bellman_ford_johnson(adj_list), i, j;
+    int v = adj_list.size();
+    if(!h){cout << "There is a negative cycle in graph"<<endl;return;}
+    /*cout << "Before changing weights"<<endl;
+    print_adj_list(adj_list);
+    */
+    change_weights(adj_list,h);
+    /*cout << "After changing weights"<<endl;
+    print_adj_list(adj_list);
+    cout << "h vector is as follow : ";
+    for(i=0;i<v;i++)cout << h[i]<< ' ';
+    cout<<endl;
+    */
+    /*Now apply djk*/
+
+    int **distances = (int **)calloc(v,sizeof(int *));
+    for(i=0;i<v;i++){
+         distances[i] = dijkstra(adj_list,i);
+         /*we need to revert back the addition*/
+         for(j=0;j<v;j++)if(i!=j && distances[i][j]!=INF)distances[i][j]+=-h[i]+h[j];
+    }
+    cout << "Distance Matrix is"<<endl;
+    for(i=0;i<v;i++){
+        for(j=0;j<v;j++){
+            if(distances[i][j]!=INF)
+            cout << distances[i][j] << ' ';
+            else
+            cout << "INF ";
+        }
+        cout << endl;
+    }
+}
+int main(){
+    /*
+    Copy Input
+    4 5
+    0 1 -5
+    1 2 4
+    2 3 1
+    0 3 3
+    0 2 2
+    
+    */
+    int i, n, e, src, dest, wt, j;
+    cin >> n >> e;
+    vector<list<pair<int,int> > > adj_list(n);
+    for(i=0;i<e;i++){
+        cin >> src >> dest >> wt;
+        add_edge(adj_list,src,dest,wt);
+    }
+    johnson_spa(adj_list);
+    return 0;
 }
